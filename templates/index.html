@@ -1,24 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Weather Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.2);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --text-light: #fff;
+      --text-dark: #333;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%);
+      height: 100vh;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.4s;
+    }
+
+    .dark-mode {
+      background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+      color: var(--text-light);
+    }
+
+    .container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      padding: 30px 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: 0.4s;
+    }
+
+    .dark-mode .container {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      width: 80%;
+      margin: 10px 0;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      background-color: #4a90e2;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    button.toggle-dark {
+      background-color: #555;
+      margin-top: 10px;
+    }
+
+    .weather-card {
+      margin-top: 20px;
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .dark-mode .weather-card {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .flag {
+      width: 32px;
+      vertical-align: middle;
+    }
+
+    .error {
+      color: #ff4e4e;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    canvas {
+      margin-top: 20px;
+      max-width: 100%;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-    <h1>Weather Dashboard</h1>
+  <div class="container">
+    <h1>🌤️ Weather Dashboard</h1>
+
     <form method="POST">
-        <input type="text" name="city" placeholder="Enter city name">
-        <button type="submit">Get Weather</button>
+      <input type="text" name="city" placeholder="Enter city name" required>
+      <br />
+      <button type="submit">Get Weather</button>
     </form>
 
-    {% if error %}
-        <p style="color:red;">{{ error }}</p>
-    {% endif %}
+    <button class="toggle-dark" onclick="toggleDarkMode()">Toggle Dark Mode</button>
 
     {% if weather %}
-        <h2>{{ weather.city }}, {{ weather.country }}</h2>
-        <p>Temperature: {{ weather.temperature }}°C</p>
-        <p>Condition: {{ weather.condition }}</p>
-        <img src="{{ weather.icon }}" alt="Weather icon">
+    <div class="weather-card">
+      <h2>
+        {{ weather.city }}
+        {% if weather.country_code %}
+        <img src="https://flagcdn.com/32x24/{{ weather.country_code | lower }}.png" class="flag" />
+        {% endif %}
+      </h2>
+      <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
+      <p><strong>Condition:</strong> {{ weather.description }}</p>
+      <p><strong>Humidity:</strong> {{ weather.humidity }}%</p>
+      <p><strong>Wind:</strong> {{ weather.wind_speed }} km/h</p>
+    </div>
+
+    <canvas id="tempChart"></canvas>
     {% endif %}
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+  </div>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    {% if weather %}
+    const ctx = document.getElementById("tempChart").getContext("2d");
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: ["Now", "Now+2s", "Now+4s", "Now+6s"],
+        datasets: [{
+          label: "Temp °C",
+          data: [
+            {{ weather.temperature }},
+            {{ weather.temperature - 1 }},
+            {{ weather.temperature - 0.5 }},
+            {{ weather.temperature + 0.7 }}
+          ],
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          borderColor: "rgba(255, 99, 132, 1)",
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: {
+          duration: 800
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    {% endif %}
+  </script>
 </body>
 </html>
